@@ -1,53 +1,7 @@
-% Load the preprocessed data
-imageFolder = 'tomato_data'; % Folder with resized images
-imds = imageDatastore(imageFolder, ...
-    'IncludeSubfolders', true, ...
-    'LabelSource', 'foldernames');
-
-% Split into training and testing
-[imdsTrain, imdsTest] = splitEachLabel(imds, 0.8, 'randomized');
-
-% Preallocate arrays
-numTrain = numel(imdsTrain.Files);
-numTest = numel(imdsTest.Files);
-imageSize = [64, 64, 3]; % height, width, channels
-XTrain = zeros(numTrain, prod(imageSize), 'double');
-XTest = zeros(numTest, prod(imageSize), 'double');
-
-% Load training data
-for i = 1:numTrain
-    img = im2double(readimage(imdsTrain, i)); % Read and convert to double
-    XTrain(i, :) = img(:)';
-end
-yTrain = imdsTrain.Labels;
-
-% Load testing data
-for i = 1:numTest
-    img = im2double(readimage(imdsTest, i));
-    XTest(i, :) = img(:)';
-end
-yTest = imdsTest.Labels;
-
-% Normalize features
-meanX = mean(XTrain, 1);
-stdX = std(XTrain, [], 1);
-XTrain = (XTrain - meanX) ./ (stdX + 1e-8); % add small epsilon to avoid div-by-zero
-XTest = (XTest - meanX) ./ (stdX + 1e-8);
-
-% Convert labels to one-hot encoding
-classNames = categories(yTrain);
-numClasses = numel(classNames);
-YTrain = onehotencode(yTrain, 2);
-YTest = onehotencode(yTest, 2);
-
-% Convert data types
-X_train = double(XTrain);
-X_test = double(XTest);
-Y_train = double(YTrain);
-Y_test = double(YTest);
+%____________________________________
 
 input_dim = size(X_train, 2);
-hidden_dim = 30;
+hidden_dim = 60;
 output_dim = numClasses;
 max_iter = 100;
 learning_rate = 0.5;
@@ -57,37 +11,36 @@ tic;
 [W1_gd, b1_gd, W2_gd, b2_gd, history_gd] = gradient_m(X_train, Y_train, input_dim, hidden_dim, output_dim, learning_rate, max_iter);
 time_gd = toc;
 
-fprintf('Training with Newton Method...\n');
-tic;
-[W1_nt, b1_nt, W2_nt, b2_nt, history_nt] = newton(X_train, Y_train, input_dim, hidden_dim, output_dim, max_iter);
-time_nt = toc;
 
-% Prediction
 y_pred_gd = predict(X_test, W1_gd, b1_gd, W2_gd, b2_gd);
-y_pred_nt = predict(X_test, W1_nt, b1_nt, W2_nt, b2_nt);
-
-% Evaluation
 fprintf('Evaluating Gradient Descent model...\n');
 evaluate(Y_test, y_pred_gd);
+
+fprintf('Training with Alternative Optimisation Method...\n');
+tic;
+[W1_ao, b1_ao, W2_ao, b2_ao, history_ao] = adam_m(X_train, Y_train, input_dim, hidden_dim, output_dim, learning_rate, max_iter);
+time_ao = toc;
+
+y_pred_ao = predict(X_test, W1_ao, b1_ao, W2_ao, b2_ao);
 fprintf('Evaluating Newton model...\n');
-evaluate(Y_test, y_pred_nt);
+evaluate(Y_test, y_pred_ao);
 
 % Plotting
 figure;
 subplot(1,2,1);
 plot(history_gd.loss, 'b', 'LineWidth',2); hold on;
-plot(history_nt.loss, 'r', 'LineWidth',2);
+plot(history_ao.loss, 'r', 'LineWidth',2);
 xlabel('Iteration');
 ylabel('Loss');
-legend('Gradient Descent', 'Newton');
+legend('Gradient Descent', 'Alternative Opt');
 title('Loss over Iterations');
 
 subplot(1,2,2);
 plot(history_gd.grad_norm, 'b', 'LineWidth',2); hold on;
-plot(history_nt.grad_norm, 'r', 'LineWidth',2);
+plot(history_ao.grad_norm, 'r', 'LineWidth',2);
 xlabel('Iteration');
 ylabel('Gradient Norm');
-legend('Gradient Descent', 'Newton');
+legend('Gradient Descent', 'Alternative Opt');
 title('Gradient Norm over Iterations');
 
-fprintf('Training times: GD = %.2f sec, Newton = %.2f sec\n', time_gd, time_nt);
+fprintf('Training times: GD = %.2f sec, AO = %.2f sec\n', time_gd, time_ao);

@@ -1,4 +1,3 @@
-% Load the preprocessed data
 imageFolder = 'tomato_data'; % Folder with resized images
 imds = imageDatastore(imageFolder, ...
     'IncludeSubfolders', true, ...
@@ -7,7 +6,6 @@ imds = imageDatastore(imageFolder, ...
 % Split into training and testing
 [imdsTrain, imdsTest] = splitEachLabel(imds, 0.8, 'randomized');
 
-% Preallocate arrays
 numTrain = numel(imdsTrain.Files);
 numTest = numel(imdsTest.Files);
 imageSize = [64, 64, 3]; % height, width, channels

@@ -128,7 +128,7 @@ function [weight1, bias1, weight2, bias2, history] = adam_m(X, y, input_dim, hid
         bias2 = bias2 - alpha * m_bias2_hat ./ (sqrt(v_bias2_hat) + epsilon);
         
         % Print progress
-        if mod(iter, 10) == 0
+        if mod(iter, 50) == 0
             fprintf('Iteration %d, Loss: %.6f, Gradient Norm: %.6f\n', iter, loss, grad_norm);
         end
         

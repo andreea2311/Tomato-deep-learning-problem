@@ -62,7 +62,7 @@ function [W1, b1, W2, b2, history] = newton(X, y, input_dim, hidden_dim, output_
         grad_norm = norm(total_grad);
         history.grad_norm = [history.grad_norm; grad_norm];
         
-        if mod(iter, 10) == 0
+        if mod(iter, 50) == 0
             fprintf('Iteration %d, Loss: %.6f, Gradient Norm: %.6f\n', iter, loss, grad_norm);
         end
         
